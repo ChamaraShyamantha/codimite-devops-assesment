@@ -19,7 +19,7 @@ jobs:
     - name: Set up Google Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
       with:
-        project_id: ${{ secrets.GCP_PROJECT_ID }}
+        project_id: ${{ secrets.project_id}}
         credentials_json: ${{ secrets.SERVICE_ACCOUNT }}
 
     - name: Lint HTML files
@@ -29,11 +29,11 @@ jobs:
 
     - name: Build Docker image
       run: |
-        docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/html-site:$GITHUB_SHA .
+        docker build -t gcr.io/${{ secrets.project_id }}/html-site:$GITHUB_SHA .
 
     - name: Push Docker image to GCR
       run: |
-        docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/html-site:$GITHUB_SHA
+        docker push gcr.io/${{ secrets.project_id }}/html-site:$GITHUB_SHA
 
   deploy:
     runs-on: ubuntu-latest
@@ -46,7 +46,7 @@ jobs:
     - name: Set up Google Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
       with:
-        project_id: ${{ secrets.GCP_PROJECT_ID }}
+        project_id: ${{ secrets.project_id }}
         credentials_json: ${{ secrets.SERVICE_ACCOUNT }}
 
     - name: Install ArgoCD CLI
@@ -56,7 +56,7 @@ jobs:
 
     - name: Authenticate to GKE
       run: |
-        gcloud container clusters get-credentials ${{ secrets.GKE_CLUSTER }} --zone ${{ secrets.GKE_ZONE }} --project ${{ secrets.GCP_PROJECT_ID }}
+        gcloud container clusters get-credentials ${{ secrets.GKE_CLUSTER }} --zone ${{ secrets.GKE_ZONE }} --project ${{ secrets.project_id }}
 
     - name: Deploy to GKE using ArgoCD
       run: |

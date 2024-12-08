@@ -29,11 +29,11 @@ jobs:
 
     - name: Build Docker image
       run: |
-        docker build -t gcr.io/${{ secrets.project_id }}/html-site:$GITHUB_SHA .
+        docker build -t gcr.io${{ secrets.project_id }}/html-site:$GITHUB_SHA .
 
     - name: Push Docker image to GCR
       run: |
-        docker push gcr.io/${{ secrets.project_id }}/html-site:$GITHUB_SHA
+        docker push gcr.io${{ secrets.project_id }}/html-site:$GITHUB_SHA
 
   deploy:
     runs-on: ubuntu-latest

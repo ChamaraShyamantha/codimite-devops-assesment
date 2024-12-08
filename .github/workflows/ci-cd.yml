@@ -1,0 +1,69 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Set up Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Lint HTML files
+      run: |
+        npm install -g htmlhint
+        htmlhint *.html
+
+    - name: Build Docker image
+      run: |
+        docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/html-site:$GITHUB_SHA .
+
+    - name: Push Docker image to GCR
+      run: |
+        docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/html-site:$GITHUB_SHA
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Install ArgoCD CLI
+      run: |
+        curl -sSL https://github.com/argoproj/argo-cd/releases/download/v2.5.0/argocd-linux-amd64 -o /usr/local/bin/argocd
+        chmod +x /usr/local/bin/argocd
+
+    - name: Authenticate to GKE
+      run: |
+        gcloud container clusters get-credentials ${{ secrets.GKE_CLUSTER }} --zone ${{ secrets.GKE_ZONE }} --project ${{ secrets.GCP_PROJECT_ID }}
+
+    - name: Deploy to GKE using ArgoCD
+      run: |
+        argocd login ${{ secrets.ARGOCD_SERVER }} --username ${{ secrets.ARGOCD_USERNAME }} --password ${{ secrets.ARGOCD_PASSWORD }} --insecure
+
+        argocd app sync html-site-app --revision $GITHUB_SHA --prune --yes
+
+    - name: Test Deployment
+      run: |
+        curl -f http://<GKE-LoadBalancer-IP> || exit 1

@@ -3,7 +3,7 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - github-actions-setup
+      - main
 
 jobs:
   build:
@@ -19,11 +19,11 @@ jobs:
     - name: Set up Google Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
       with:
-        project_id: ${{ secrets.GCP_PROJECT_ID }}
-        credentials_json: ${{ secrets.GCP_SA_KEY }}
+        credentials_json: ${{ secrets.SERVICE_ACCOUNT }}
 
     - name: Lint HTML files
       run: |
+        # Assuming you are using a linting tool like htmlhint
         npm install -g htmlhint
         htmlhint *.html
 
@@ -46,8 +46,7 @@ jobs:
     - name: Set up Google Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
       with:
-        project_id: ${{ secrets.GCP_PROJECT_ID }}
-        credentials_json: ${{ secrets.GCP_SA_KEY }}
+        credentials_json: ${{ secrets.SERVICE_ACCOUNT }}
 
     - name: Install ArgoCD CLI
       run: |
@@ -66,4 +65,5 @@ jobs:
 
     - name: Test Deployment
       run: |
+        # Example curl test to check if the HTML site is deployed
         curl -f http://<GKE-LoadBalancer-IP> || exit 1
